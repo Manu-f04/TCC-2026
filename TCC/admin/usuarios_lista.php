@@ -19,7 +19,7 @@ if (isset($_GET['alterar_nivel']) && isset($_GET['id'])) {
 }
 
 // Busca todos os dados do banco
-$sql = "SELECT id, nome, email, cpf, nivel_acesso FROM usuarios ORDER BY nivel_acesso ASC, nome ASC";
+$sql = "SELECT id, nome, email, nivel_acesso FROM usuarios ORDER BY nivel_acesso ASC, nome ASC";
 $res = $con->query($sql);
 ?>
 
@@ -39,7 +39,8 @@ $res = $con->query($sql);
             <tr>
                 <th>Nome</th>
                 <th>E-mail</th>
-                <th>CPF</th>
+                
+                
                 <th class="text-center">Nível</th>
                 <th class="text-center">Ações</th>
             </tr>
@@ -49,7 +50,8 @@ $res = $con->query($sql);
             <tr>
                 <td class="fw-bold"><?= htmlspecialchars($row['nome']) ?></td>
                 <td><?= htmlspecialchars($row['email']) ?></td>
-                <td><?= htmlspecialchars($row['cpf']) ?></td>
+                
+                
                 <td class="text-center">
                     <?php if($row['nivel_acesso'] == 'admin'): ?>
                         <span class="badge bg-dark">Admin</span>

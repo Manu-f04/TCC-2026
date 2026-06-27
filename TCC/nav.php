@@ -21,7 +21,7 @@ $is_public_page = ($page_atual == 'index.php' || $page_atual == 'sobre.php');
     /* REMOVIDO o conflito de max-height e margin-right exagerada daqui para corrigir o afastamento */
 
     .logo img {
-         height: 200px !important;
+         height: 80px !important;
 max-height: 100px;    width: auto;
     }
     .sitename {
