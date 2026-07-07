@@ -95,7 +95,6 @@ max-height: 100px;    width: auto;
         }
     }
 </style>
-
 <header id="header" class="header sticky-top">
     <div class="main-header">
         <div class="container-fluid container-xl">

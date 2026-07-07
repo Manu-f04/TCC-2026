@@ -126,7 +126,7 @@ try {
                     
                     <td class="text-center">
                         <div class="d-flex justify-content-center gap-2">
-                            <a href="../looks.php?id=<?= $look['id'] ?>" class="btn btn-sm btn-dark" title="Visualizar Look">
+                            <a href="look_visualizar.php?id=<?= $look['id'] ?>" class="btn btn-sm btn-dark" title="Visualizar Look">
                                 <i class="bi bi-eye"></i>
                             </a>
                             <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalExcluirLook" data-id="<?= $look['id'] ?>" data-nome="<?= htmlspecialchars($look['nome'] ?? 'Look sem nome') ?>" title="Excluir">

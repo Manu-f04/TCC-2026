@@ -94,7 +94,8 @@ $res = $con->query($sql);
                 <td class="text-center">
                     <div class="d-flex justify-content-center gap-2">
                         <a href="roupas_editar.php?id=<?= $row['id'] ?>" class="btn btn-sm btn-dark">
-                            <i class="bi bi-pencil-square"></i>
+                             <i class="bi bi-eye"></i>
+
                         </a>
                         <button type="button" class="btn btn-sm btn-outline-dark" data-bs-toggle="modal" data-bs-target="#modalExcluir" data-id="<?= $row['id'] ?>" data-nome="<?= htmlspecialchars($row['nome_categoria']) ?>">
                             <i class="bi bi-trash"></i>

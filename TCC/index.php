@@ -113,7 +113,7 @@
     .cat-cosmetics { background-color: var(--bg-beauty) !important; }
     .cat-accessories { background-color: var(--bg-acc) !important; }
 
-    h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; color: rgb(255, 255, 255); }
+    h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; color: rgb(0, 0, 0); }
     .small-text { font-size: 0.85rem; color: #000000ff; margin: 0; line-height: 1.2; }
     .modal-link { font-size: 0.8rem; font-weight: 600; text-decoration: none; color: #000000ff; margin-top: 5px; }
 
