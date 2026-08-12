@@ -62,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($isEdit && $idRoupa) {
         $sql = "UPDATE roupas SET foto=?, cor1=?, cor2=?, idCategoria=?, estacoes=?, tags=? WHERE id=? AND idusuario=?";
         $stmt = $con->prepare($sql);
-        $stmt->bind_param("sssisiii", $fotoNome, $cor1, $cor2, $categoriaForm, $estacoesStr, $tags, $idRoupa, $userId);
+        // O 6º parâmetro de bind foi corrigido para "s" (string) para salvar as tags como texto
+        $stmt->bind_param("sssissii", $fotoNome, $cor1, $cor2, $categoriaForm, $estacoesStr, $tags, $idRoupa, $userId);
     } else {
         $sql = "INSERT INTO roupas (idusuario, foto, cor1, cor2, idCategoria, estacoes, tags) VALUES (?, ?, ?, ?, ?, ?, ?)";
         $stmt = $con->prepare($sql);
@@ -72,6 +73,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header("Location: guardaroupa.php?msg=" . urlencode($isEdit ? "Peça alterada com sucesso!" : "Peça cadastrada com sucesso!"));
     exit;
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="pt-br">

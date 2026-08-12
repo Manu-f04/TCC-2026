@@ -1,3 +1,39 @@
+<?php 
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+require_once 'conexao.php'; // Conexão MySQLi
+
+// Mês atual (1 a 12)
+$mesAtual = (int)date('n');
+
+// Busca as tendências cadastradas no banco para o mês vigente
+$tendencias = [];
+$stmt = $con->prepare("SELECT * FROM tendencias WHERE mes = ?");
+$stmt->bind_param("i", $mesAtual);
+$stmt->execute();
+$res = $stmt->get_result();
+
+while ($row = $res->fetch_assoc()) {
+    $tendencias[$row['categoria']] = $row;
+}
+$stmt->close();
+
+// Função auxiliar com tratativa de imagem e fallbacks
+function getTendencia($categoria, $campo, $valorPadrao, $listaTendencias) {
+    if (isset($listaTendencias[$categoria][$campo]) && !empty($listaTendencias[$categoria][$campo])) {
+        if ($campo === 'imagem') {
+            $img = $listaTendencias[$categoria]['imagem'];
+            return (strpos($img, 'http') === 0) ? $img : 'uploads/' . $img;
+        }
+        return htmlspecialchars($listaTendencias[$categoria][$campo]);
+    }
+    return $valorPadrao;
+}
+
+$usuarioLogado = isset($_SESSION['idusuario']);
+?> 
 <!DOCTYPE html>
 <html lang="pt-br">
 
@@ -12,28 +48,20 @@
   <link href="assets/css/main.css" rel="stylesheet">
   
   <style>
-    /* Definição de variáveis de cores para os fundos das categorias laterais */
-    :root {
-      --bg-men: #e3f2fd;
-      --bg-kids: #fff3e0;
-      --bg-beauty: #fce4ec;
-      --bg-acc: #e8f5e9;
-    }
-
-    /* Estilização do Card de Destaque (Tendências Verão) */
+    /* Card de Destaque Grande (Esquerda) */
     .promo-cards .category-featured {
       background: #fff;
       border-radius: 20px;
       overflow: hidden;
       display: flex;
       flex-direction: row;
-      height: 350px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.11);
+      height: 420px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
     }
 
     .promo-cards .featured-text-side {
-      flex: 1;
-      padding: 30px;
+      flex: 1.2;
+      padding: 35px;
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -48,11 +76,11 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
     }
 
-    
     .btn-amendoado {
-      background-color: #000000ff;
+      background-color: #000;
       color: #fff;
       padding: 10px 25px;
       border-radius: 12px;
@@ -70,193 +98,223 @@
       color: #fff;
     }
 
-    /* Configuração dos Cards Laterais de Categorias */
-    .promo-cards .category-card {
-      border-radius: 20px;
-      overflow: hidden;
-      display: flex;
-      flex-direction: row;
-      height: 120px;
-      transition: all 0.3s ease;
-      cursor: pointer;
-      border: none;
-      margin-bottom: 12px;
-    }
-
-    /* Efeito de movimento ao passar o mouse nos cards laterais */
-    .promo-cards .category-card:hover {
-      transform: translateX(5px);
-      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-    }
-
-    .promo-cards .category-content {
-      flex: 1.2;
-      padding: 15px 20px;
+    /* Estrutura Flexbox para expandir a coluna da direita */
+    .promo-cards .row.gy-4 > .col-lg-6 {
       display: flex;
       flex-direction: column;
-      justify-content: center;
     }
 
-    .promo-cards .category-image {
-      flex: 1;
+    /* Empurra os 4 cards mais para a direita criando um recuo */
+    @media (min-width: 992px) {
+      .promo-cards .col-grid-direita {
+        padding-left: 35px !important; 
+      }
     }
 
-    .promo-cards .category-image img {
+    /* Cards em Grade 2x2 (Direita) */
+    .promo-cards .category-card-box {
+      background-color: #f4f5f7 !important;
+      border-radius: 18px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      border: 1px solid #e9ecef;
+    }
+
+    .promo-cards .category-card-box:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.08);
+      background-color: #ebedf0 !important;
+    }
+
+    .promo-cards .card-box-img {
+      height: 130px;
+      width: 100%;
+      overflow: hidden;
+    }
+
+    .promo-cards .card-box-img img {
       width: 100%;
       height: 100%;
       object-fit: cover;
+      object-position: center;
     }
 
-    /* Classes auxiliares para as cores de fundo de cada categoria */
-    .cat-men { background-color: var(--bg-men) !important; }
-    .cat-kids { background-color: var(--bg-kids) !important; }
-    .cat-cosmetics { background-color: var(--bg-beauty) !important; }
-    .cat-accessories { background-color: var(--bg-acc) !important; }
+    .promo-cards .card-box-content {
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+    }
 
-    h4 { font-size: 1.1rem; font-weight: 700; margin-bottom: 2px; color: rgb(0, 0, 0); }
-    .small-text { font-size: 0.85rem; color: #000000ff; margin: 0; line-height: 1.2; }
-    .modal-link { font-size: 0.8rem; font-weight: 600; text-decoration: none; color: #000000ff; margin-top: 5px; }
+    .promo-cards .card-box-content h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      margin: 0;
+      color: #1a1a1a;
+      display: -webkit-box;
+      -webkit-line-clamp: 1;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      line-height: 1.2;
+    }
 
-    /* Estilização dos Modais (Janelas Pop-up) */
+    .modal-link { 
+      font-size: 0.8rem; 
+      font-weight: 600; 
+      text-decoration: none; 
+      color: #555; 
+    }
+
+    /* Modais */
     .modal-content { border-radius: 25px; border: none; }
-    .modal-img-top { width: 100%; height: 250px; object-fit: cover; border-radius: 25px 25px 0 0; }
+    .modal-img-top { width: 100%; height: 280px; object-fit: cover; object-position: center; border-radius: 25px 25px 0 0; }
   </style>
 </head>
 
 <body class="index-page">
 
-<?php 
-// Inicia a sessão para verificar se o usuário está autenticado
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-include 'nav.php'; // Inclui o cabeçalho/navegação padrão
-
-// Verifica se existe um ID de usuário na sessão para decidir o que mostrar (como o botão de cadastro)
-$usuarioLogado = isset($_SESSION['idusuario']);
-?> 
+<?php include 'nav.php'; ?> 
 
 <main class="main">
   <section id="promo-cards" class="promo-cards section mt-5">
     <div class="container" data-aos="fade-up">
       <div class="row gy-4">
 
+        <!-- DESTAQUE PRINCIPAL DA ESQUERDA -->
         <div class="col-lg-6">
           <div class="category-featured">
             <div class="featured-text-side">
-              <h2 class="fw-bold h3">Tendências Verão 2025</h2>
-              <p>Para o verão 2025, a moda aposta em cores neutras (bege, marrom Mocha Mousse) e vibrantes (azul, amarelo, laranja).
-                 Nos tecidos, dominam os leves e confortáveis, como linho, viscose e crochê.</p>
+              <h2 class="fw-bold h3"><?= getTendencia('destaque', 'titulo', 'tendências de moda em 2026', $tendencias) ?></h2>
+              <p><?= getTendencia('destaque', 'descricao', 'As tendências de moda em 2026 priorizam o conforto, o movimento e a sofisticação leve. Destacam-se o off-white suave, tons terrosos e vinhos, além de texturas artesanais, alfaiataria fluida e maxibrincos.', $tendencias) ?></p>
               
               <?php if (!$usuarioLogado): ?>
                 <a href="cadastro.php" class="btn-amendoado">Se interessou? Cadastre-se</a>
               <?php endif; ?>
             </div>
             <div class="featured-image-side">
-              <img src="tendenciasverão.png" alt="Verão 2025">
+              <img src="<?= getTendencia('destaque', 'imagem', 'assets/img/destaque2026.png', $tendencias) ?>" alt="Destaque Principal">
             </div>
           </div>
         </div>
 
-        <div class="col-lg-6">
-          
-          <div class="category-card cat-men" data-bs-toggle="modal" data-bs-target="#modalMen">
-            <div class="category-content">
-              <h4>Moda Masculina</h4>
-              <p class="small-text">O que está em alta na moda masculina?</p>
-              <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+        <!-- GRADE 2x2 DA DIREITA (Empurrada mais para a direita com col-grid-direita e ps-lg-4) -->
+        <div class="col-lg-6 col-grid-direita ps-lg-4">
+          <div class="row g-3 h-100">
+            
+            <!-- CARD 1 -->
+            <div class="col-6 h-50">
+              <div class="category-card-box" data-bs-toggle="modal" data-bs-target="#modalCard1">
+                <div class="card-box-img">
+                  <img src="<?= getTendencia('card1', 'imagem', 'modafeminina.png', $tendencias) ?>">
+                </div>
+                <div class="card-box-content">
+                  <h4><?= getTendencia('card1', 'titulo', 'Moda Feminina', $tendencias) ?></h4>
+                  <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+                </div>
+              </div>
             </div>
-            <div class="category-image">
-              <img src="modamasculina.avif">
-            </div>
-          </div>
 
-          <div class="category-card cat-kids" data-bs-toggle="modal" data-bs-target="#modalKids">
-            <div class="category-content">
-              <h4>Moda Infantil</h4>
-              <p class="small-text">O que está em alta na moda infantil?</p>
-              <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+            <!-- CARD 2 -->
+            <div class="col-6 h-50">
+              <div class="category-card-box" data-bs-toggle="modal" data-bs-target="#modalCard2">
+                <div class="card-box-img">
+                  <img src="<?= getTendencia('card2', 'imagem', 'modamasculina.png', $tendencias) ?>">
+                </div>
+                <div class="card-box-content">
+                  <h4><?= getTendencia('card2', 'titulo', 'Moda Masculina', $tendencias) ?></h4>
+                  <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+                </div>
+              </div>
             </div>
-            <div class="category-image">
-              <img src="modainfantil.png">
-            </div>
-          </div>
 
-          <div class="category-card cat-cosmetics" data-bs-toggle="modal" data-bs-target="#modalBeauty">
-            <div class="category-content">
-              <h4>Produtos de Beleza</h4>
-              <p class="small-text">O que está em alta nos produtos de beleza?</p>
-              <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+            <!-- CARD 3 -->
+            <div class="col-6 h-50">
+              <div class="category-card-box" data-bs-toggle="modal" data-bs-target="#modalCard3">
+                <div class="card-box-img">
+                  <img src="<?= getTendencia('card3', 'imagem', 'modainfantil2.png', $tendencias) ?>">
+                </div>
+                <div class="card-box-content">
+                  <h4><?= getTendencia('card3', 'titulo', 'Moda Infantil', $tendencias) ?></h4>
+                  <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+                </div>
+              </div>
             </div>
-            <div class="category-image">
-              <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=400">
-            </div>
-          </div>
 
-          <div class="category-card cat-accessories" data-bs-toggle="modal" data-bs-target="#modalAcc">
-            <div class="category-content">
-              <h4>Acessórios</h4>
-              <p class="small-text">O que está em alta nos acessórios?</p>
-              <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+            <!-- CARD 4 -->
+            <div class="col-6 h-50">
+              <div class="category-card-box" data-bs-toggle="modal" data-bs-target="#modalCard4">
+                <div class="card-box-img">
+                  <img src="<?= getTendencia('card4', 'imagem', 'Acessórios_Beleza.png', $tendencias) ?>">
+                </div>
+                <div class="card-box-content">
+                  <h4><?= getTendencia('card4', 'titulo', 'Acessórios & Beleza', $tendencias) ?></h4>
+                  <span class="modal-link">Ver informações <i class="bi bi-arrow-right-short"></i></span>
+                </div>
+              </div>
             </div>
-            <div class="category-image">
-              <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=400">
-            </div>
-          </div>
 
+          </div>
         </div>
+
       </div>
     </div>
   </section>
 </main>
 
-<div class="modal fade" id="modalMen" tabindex="-1" aria-hidden="true">
+<!-- MODAIS DE INFORMAÇÕES -->
+<div class="modal fade" id="modalCard1" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center">
-      <img src="modamasculina.avif" class="modal-img-top">
+      <img src="<?= getTendencia('card1', 'imagem', 'modafeminina.png', $tendencias) ?>" class="modal-img-top">
       <div class="modal-body p-4">
-        <h3 class="fw-bold">Tendências da Moda Masculina</h3>
-        <p class="text-muted">O foco da temporada é o conforto autêntico e a sustentabilidade. A tendência une clássicos renovados a uma alfaiataria casual em tons terrosos.</p>
-        <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Fechar</button>
+        <h4 class="fw-bold mb-3"><?= getTendencia('card1', 'titulo', 'Moda Feminina', $tendencias) ?></h4>
+        <p class="text-muted"><?= getTendencia('card1', 'descricao', 'A moda feminina destaca peças em alfaiataria fluida, tons terrosos, tecidos naturais e acessórios artesanais para um visual sofisticado e confortável.', $tendencias) ?></p>
+        <button type="button" class="btn btn-dark rounded-pill px-4 mt-2" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="modalKids" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalCard2" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center">
-      <img src="modainfantil.png" class="modal-img-top">
+      <img src="<?= getTendencia('card2', 'imagem', 'modamasculina.png', $tendencias) ?>" class="modal-img-top">
       <div class="modal-body p-4">
-        <h3 class="fw-bold">Tendências da Moda Infantil</h3>
-        <p class="text-muted">A temporada celebra a liberdade de movimento com muita criatividade. O destaque fica para o mix de cores vibrantes com tons terrosos naturais.</p>
-        <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Fechar</button>
+        <h4 class="fw-bold mb-3"><?= getTendencia('card2', 'titulo', 'Moda Masculina', $tendencias) ?></h4>
+        <p class="text-muted"><?= getTendencia('card2', 'descricao', 'O guarda-roupa masculino aposta em cortes soltos, tecidos respiráveis como linho, sobreposições leves e paletas neutras e elegantes.', $tendencias) ?></p>
+        <button type="button" class="btn btn-dark rounded-pill px-4 mt-2" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="modalBeauty" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalCard3" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center">
-      <img src="https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?q=80&w=800" class="modal-img-top">
+      <img src="<?= getTendencia('card3', 'imagem', 'modainfantil2.png', $tendencias) ?>" class="modal-img-top">
       <div class="modal-body p-4">
-        <h3 class="fw-bold">Tendências em Produtos de Beleza</h3>
-        <p class="text-muted">A era da "Quiet Beauty" prioriza a beleza autêntica e natural, com maquiagens que tratam a pele (Skinificação) enquanto realçam o visual.</p>
-        <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Fechar</button>
+        <h4 class="fw-bold mb-3"><?= getTendencia('card3', 'titulo', 'Moda Infantil', $tendencias) ?></h4>
+        <p class="text-muted"><?= getTendencia('card3', 'descricao', 'A moda infantil traz estampas lúdicas, algodão orgânico, modelagens confortáveis e peças práticas focadas na liberdade de movimento.', $tendencias) ?></p>
+        <button type="button" class="btn btn-dark rounded-pill px-4 mt-2" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
 </div>
 
-<div class="modal fade" id="modalAcc" tabindex="-1" aria-hidden="true">
+<div class="modal fade" id="modalCard4" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content text-center">
-      <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?q=80&w=800" class="modal-img-top">
+      <img src="<?= getTendencia('card4', 'imagem', 'Acessórios_Beleza.png', $tendencias) ?>" class="modal-img-top">
       <div class="modal-body p-4">
-        <h3 class="fw-bold">Tendências em Acessórios</h3>
-        <p class="text-muted">O ano é do Maximalismo. Peças grandes, esculturais e com formatos orgânicos dominam o visual, celebrando a ousadia em cada detalhe.</p>
-        <button type="button" class="btn btn-dark rounded-pill px-4" data-bs-dismiss="modal">Fechar</button>
+        <h4 class="fw-bold mb-3"><?= getTendencia('card4', 'titulo', 'Acessórios & Beleza', $tendencias) ?></h4>
+        <p class="text-muted"><?= getTendencia('card4', 'descricao', 'Em alta os maxibrincos geométricos, bolsas estruturadas em tons neutros, maquiagem com acabamento glow natural e texturas artesanais.', $tendencias) ?></p>
+        <button type="button" class="btn btn-dark rounded-pill px-4 mt-2" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
@@ -266,7 +324,7 @@ $usuarioLogado = isset($_SESSION['idusuario']);
 
 <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 <script src="assets/vendor/aos/aos.js"></script>
-<script>AOS.init(); // Inicializa o motor de animação AOS </script>
+<script>AOS.init();</script>
 
 </body>
 </html>

@@ -7,7 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once '../conexao.php';
 require_once '../autorizacao.php';
 
-/** * Normalização de Cores CSS - Trazido exatamente do seu looks.php
+/** 
+ * Normalização de Cores CSS - Trazido exatamente do seu looks.php
  */
 function normalizeColorValue($value) {
     $value = trim($value);
@@ -18,6 +19,23 @@ function normalizeColorValue($value) {
     if (strlen($value) == 3 && ctype_xdigit($value)) return '#' . $value[0].$value[0].$value[1].$value[1].$value[2].$value[2];
     if (strlen($value) == 6 && ctype_xdigit($value)) return '#' . $value;
     return '';
+}
+
+// Função para normalizar leetspeak e caracteres
+if (!function_exists('normalizarTexto')) {
+    function normalizarTexto($texto) {
+        $texto = mb_strtolower($texto, 'UTF-8');
+        $substituicoes = [
+            '@' => 'a', '4' => 'a', 'ã' => 'a', 'á' => 'a', 'à' => 'a', 'â' => 'a',
+            '3' => 'e', 'é' => 'e', 'ê' => 'e',
+            '1' => 'i', '!' => 'i', 'í' => 'i', '|' => 'i',
+            '0' => 'o', 'ô' => 'o', 'ó' => 'o', 'õ' => 'o',
+            '5' => 's', '$' => 's',
+            '7' => 't',
+            'u' => 'u', 'ú' => 'u'
+        ];
+        return strtr($texto, $substituicoes);
+    }
 }
 
 $userId = $_SESSION['idusuario'];
@@ -36,16 +54,37 @@ $id_look = intval($_GET['id']);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $legenda = trim($_POST['legenda'] ?? '');
 
-    // Atualiza apenas a legenda da publicação pertencente ao usuário logado
-    $stmt = $con->prepare("UPDATE looks SET legenda = ? WHERE id = ? AND idusuario = ? AND publicado = 1");
-    $stmt->bind_param("sii", $legenda, $id_look, $userId);
-    
-    if ($stmt->execute()) {
-        $sucesso = true;
-    } else {
-        $erro = "Erro ao atualizar a publicação. Tente novamente.";
+    // Checa se a nova legenda possui termos bloqueados
+    $bloqueado = false;
+    if (!empty($legenda)) {
+        $legendaTratada = normalizarTexto($legenda);
+        $result_palavras = $con->query("SELECT palavra FROM palavras_bloqueadas");
+
+        if ($result_palavras && $result_palavras->num_rows > 0) {
+            while ($row = $result_palavras->fetch_assoc()) {
+                $palavraProibida = normalizarTexto($row['palavra']);
+                if (!empty($palavraProibida) && mb_strpos($legendaTratada, $palavraProibida) !== false) {
+                    $bloqueado = true;
+                    break;
+                }
+            }
+        }
     }
-    $stmt->close();
+
+    if ($bloqueado) {
+        $erro = "Sua legenda contém palavras ofensivas ou termos não permitidos.";
+    } else {
+        // Atualiza apenas a legenda da publicação pertencente ao usuário logado
+        $stmt = $con->prepare("UPDATE looks SET legenda = ? WHERE id = ? AND idusuario = ? AND publicado = 1");
+        $stmt->bind_param("sii", $legenda, $id_look, $userId);
+
+        if ($stmt->execute()) {
+            $sucesso = true;
+        } else {
+            $erro = "Erro ao atualizar a publicação. Tente novamente.";
+        }
+        $stmt->close();
+    }
 }
 
 // BUSCA OS DADOS DO LOOK ESPECÍFICO (Garantindo segurança que pertence ao usuário)
@@ -92,7 +131,7 @@ $footer_conteudo = str_replace('href="index.php"', 'href="../index.php"', $foote
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Editar Publicação </title>
+    <title>Editar Publicação</title>
     <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
     <link href="../assets/css/main.css" rel="stylesheet">
@@ -212,14 +251,26 @@ $footer_conteudo = str_replace('href="index.php"', 'href="../index.php"', $foote
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
+    // Se deu tudo certo
     <?php if ($sucesso): ?>
         Swal.fire({
             title: 'Atualizado!',
-            text: 'As alterações na legenda foram salvas com sucesso.',
+            text: 'Sua publicação foi atualizada com sucesso.',
             icon: 'success',
             confirmButtonColor: '#212529'
         }).then(() => {
             window.location.href = 'comunidade.php';
+        });
+    <?php endif; ?>
+
+    // Se a legenda continha algo bloqueado (como b4b4c4)
+    <?php if (!empty($erro)): ?>
+        Swal.fire({
+            title: 'Legenda Não Permitida!',
+            html: 'Detectamos palavras ofensivas ou números substituindo letras (como <b>b4b4c4</b>).<br><br>Por favor, altere sua legenda para continuar.',
+            icon: 'warning',
+            confirmButtonColor: '#212529',
+            confirmButtonText: 'Entendido'
         });
     <?php endif; ?>
     </script>

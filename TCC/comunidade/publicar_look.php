@@ -7,7 +7,8 @@ if (session_status() === PHP_SESSION_NONE) {
 require_once '../conexao.php';
 require_once '../autorizacao.php';
 
-/** * Normalização de Cores CSS - Trazido exatamente do seu looks.php
+/** 
+ * Normalização de Cores CSS - Trazido exatamente do seu looks.php
  */
 function normalizeColorValue($value) {
     $value = trim($value);
@@ -20,6 +21,23 @@ function normalizeColorValue($value) {
     return '';
 }
 
+// Função para normalizar leetspeak e caracteres
+if (!function_exists('normalizarTexto')) {
+    function normalizarTexto($texto) {
+        $texto = mb_strtolower($texto, 'UTF-8');
+        $substituicoes = [
+            '@' => 'a', '4' => 'a', 'ã' => 'a', 'á' => 'a', 'à' => 'a', 'â' => 'a',
+            '3' => 'e', 'é' => 'e', 'ê' => 'e',
+            '1' => 'i', '!' => 'i', 'í' => 'i', '|' => 'i',
+            '0' => 'o', 'ô' => 'o', 'ó' => 'o', 'õ' => 'o',
+            '5' => 's', '$' => 's',
+            '7' => 't',
+            'u' => 'u', 'ú' => 'u'
+        ];
+        return strtr($texto, $substituicoes);
+    }
+}
+
 $userId = $_SESSION['idusuario'];
 $erro = "";
 $sucesso = false;
@@ -29,15 +47,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['look_escolhido'])) {
     $id_look = intval($_POST['look_escolhido']);
     $legenda = trim($_POST['legenda'] ?? '');
 
-    $stmt = $con->prepare("UPDATE looks SET publicado = 1, data_publicacao = NOW(), legenda = ? WHERE id = ? AND idusuario = ?");
-    $stmt->bind_param("sii", $legenda, $id_look, $userId);
-    
-    if ($stmt->execute()) {
-        $sucesso = true;
-    } else {
-        $erro = "Erro ao publicar o look. Tente novamente.";
+    // 1. Checa se a legenda possui termos bloqueados no banco de dados
+    $bloqueado = false;
+    if (!empty($legenda)) {
+        $legendaTratada = normalizarTexto($legenda);
+        $result_palavras = $con->query("SELECT palavra FROM palavras_bloqueadas");
+
+        if ($result_palavras && $result_palavras->num_rows > 0) {
+            while ($row = $result_palavras->fetch_assoc()) {
+                $palavraProibida = normalizarTexto($row['palavra']);
+                if (!empty($palavraProibida) && mb_strpos($legendaTratada, $palavraProibida) !== false) {
+                    $bloqueado = true;
+                    break;
+                }
+            }
+        }
     }
-    $stmt->close();
+
+    // 2. Se houver ofensa, preenche a variável $erro para disparar o SweetAlert do seu JS
+    if ($bloqueado) {
+        $erro = "Sua legenda contém palavras ofensivas ou termos não permitidos.";
+    } else {
+        // 3. Se estiver limpa, salva no banco
+        $stmt = $con->prepare("UPDATE looks SET publicado = 1, data_publicacao = NOW(), legenda = ? WHERE id = ? AND idusuario = ?");
+        $stmt->bind_param("sii", $legenda, $id_look, $userId);
+        
+        if ($stmt->execute()) {
+            $sucesso = true;
+        } else {
+            $erro = "Erro ao publicar o look. Tente novamente.";
+        }
+        $stmt->close();
+    }
 }
 
 // BUSCA OS LOOKS EXATAMENTE COMO NO SEU LOOKS.PHP (Filtrando apenas os não publicados ainda)
@@ -235,14 +276,26 @@ $footer_conteudo = str_replace('href="index.php"', 'href="../index.php"', $foote
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
     <script>
+    // Se deu tudo certo
     <?php if ($sucesso): ?>
         Swal.fire({
             title: 'Publicado!',
-            text: 'Seu look já está visível na comunidade.',
+            text: 'Seu look foi publicado com sucesso.',
             icon: 'success',
             confirmButtonColor: '#212529'
         }).then(() => {
             window.location.href = 'comunidade.php';
+        });
+    <?php endif; ?>
+
+    // Se a legenda continha algo bloqueado (como b4b4c4)
+    <?php if (!empty($erro)): ?>
+        Swal.fire({
+            title: 'Legenda Não Permitida!',
+            html: 'Detectamos palavras ofensivas ou números substituindo letras (como <b>b4b4c4</b>).<br><br>Por favor, altere sua legenda para continuar.',
+            icon: 'warning',
+            confirmButtonColor: '#212529',
+            confirmButtonText: 'Entendido'
         });
     <?php endif; ?>
     </script>

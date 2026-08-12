@@ -6,7 +6,7 @@ $pagina_titulo = "Visualizar Look";
 $pagina_ativa = "looks";
 
 if (!isset($_GET['id'])) {
-    header("Location: looks.php");
+    header("Location: looks_lista.php");
     exit();
 }
 
@@ -100,7 +100,7 @@ require_once("header_admin.php");
 </style>
 
 <div class="mb-4">
-    <a href="http://localhost/manu.Info31/TCC/admin/looks_lista.php" class="btn btn-light btn-sm mb-3"><i class="bi bi-arrow-left"></i> Voltar para a Lista</a>
+    <a href="looks_lista.php" class="btn btn-light btn-sm mb-3"><i class="bi bi-arrow-left"></i> Voltar para a Lista</a>
     <h1 class="fw-bold h3">Informações do Look</h1>
 </div>
 
@@ -129,10 +129,6 @@ require_once("header_admin.php");
                         echo '<span class="text-muted">Nenhuma peça configurada</span>';
                     }
                     ?>
-                </div>
-                
-                <div class="mt-3">
-                    
                 </div>
             </div>
         </div>
@@ -204,7 +200,6 @@ require_once("header_admin.php");
                             $label_peca1 = 'Parte de cima';
                             if (!empty($look['idroupa1']) && isset($pecas[$look['idroupa1']])) {
                                 $id_cat = intval($pecas[$look['idroupa1']]['idCategoria']);
-                                // De acordo com seu .sql, IDs 18 (Vestido) e 19 (Macacão) são peças únicas/corpo inteiro
                                 if ($id_cat === 18 || $id_cat === 19) {
                                     $label_peca1 = 'Corpo Inteiro';
                                 }
@@ -265,6 +260,14 @@ require_once("header_admin.php");
                             <?php endforeach; ?>
                         </tbody>
                     </table>
+                </div>
+
+                <div class="mt-4 pt-3 border-top d-flex justify-content-between align-items-center">
+                   
+                        <a href="looks_lista.php" class="btn btn-dark px-4 py-2 rounded-3">
+                            Fechar Visualização
+                        </a>
+                    </div>
                 </div>
 
             </div>

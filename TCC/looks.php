@@ -5,12 +5,24 @@ require_once "conexao.php";
 
 function normalizeColorValue($value) {
     $value = trim($value);
-    if (strpos($value, '#') === 0) return $value;
-    $value = strtolower(ltrim($value, '#'));
-    $nameMap = ['azul' => '#0000ff', 'preto' => '#000000', 'branco' => '#ffffff', 'vermelho' => '#ff0000', 'verde' => '#008000', 'amarelo' => '#ffff00', 'cinza' => '#808080'];
-    if (isset($nameMap[$value])) return $nameMap[$value];
-    if (strlen($value) == 3 && ctype_xdigit($value)) return '#' . $value[0].$value[0].$value[1].$value[1].$value[2].$value[2];
-    if (strlen($value) == 6 && ctype_xdigit($value)) return '#' . $value;
+    if (empty($value)) return '';
+
+    $nameMap = [
+        'azul' => '#0000ff', 
+        'preto' => '#000000', 
+        'branco' => '#ffffff', 
+        'vermelho' => '#ff0000', 
+        'verde' => '#008000', 
+        'amarelo' => '#ffff00', 
+        'cinza' => '#808080'
+    ];
+
+    $clean = strtolower(ltrim($value, '#'));
+    
+    if (isset($nameMap[$clean])) return $nameMap[$clean];
+    if (strlen($clean) == 3 && ctype_xdigit($clean)) return '#' . $clean[0].$clean[0].$clean[1].$clean[1].$clean[2].$clean[2];
+    if (strlen($clean) == 6 && ctype_xdigit($clean)) return '#' . $clean;
+
     return '';
 }
 
@@ -31,11 +43,14 @@ $looks = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     <title>Meus Looks</title>
     <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="assets/css/main.css" rel="stylesheet">
     <style>
-        .btn-floating {background:#000!important;color:#fff!important;border-radius:50px!important;padding:10px 25px!important;font-weight:500!important;border:none!important;display:inline-block!important;text-decoration:none!important}
+        .btn-floating {background:#000!important;color:#fff!important;border-radius:50px!important;padding:10px 25px!important;font-weight:500!important;border:none!important;display:inline-block!important;text-decoration:none!important;transition:all .3s!important}
+        .btn-floating:hover {background:#fff!important;color:#000!important;border:1px solid #000!important}
+        
         .look-card { border: 1px solid #eee; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); transition: 0.3s; background:#fff;}
-        .look-card:hover { transform: translateY(-5px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); }
+        .look-card:hover { transform: translateY(-8px); box-shadow: 0 12px 25px rgba(0,0,0,0.08); }
         .look-preview-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 300px; background-color: #f8f9fa; padding: 10px; position: relative; }
         .look-item-img { max-width: 90%; max-height: 100px; object-fit: contain; margin: 2px 0; }
         .extra-item-img { position: absolute; right: 15px; top: 55%; max-width: 70px; max-height: 70px; border: none; background: transparent; z-index: 5;}
@@ -48,40 +63,44 @@ $looks = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 <body class="index-page">
 <?php include 'nav.php'; ?>
 <main class="main">
-    <div class="page-title light-background">
+    <div class="page-title light-background" data-aos="fade-up">
         <div class="container d-lg-flex justify-content-between align-items-center py-4">
             <h1 class="mb-3 mb-lg-0">Meus Looks</h1>
             <a href="cadastrarlook.php" class="btn btn-floating">Novo Look</a>
         </div>
     </div>
+    
     <div class="container my-5">
         <?php if (empty($looks)): ?>
-            <div class="text-center py-5"><i class="bi bi-heart text-muted" style="font-size: 3rem;"></i><h5 class="text-muted mt-3">Nenhum look cadastrado ainda.</h5></div>
+            <div class="text-center py-5" data-aos="fade-up">
+                <i class="bi bi-heart text-muted" style="font-size: 3rem;"></i>
+                <h5 class="text-muted mt-3">Nenhum look cadastrado ainda.</h5>
+            </div>
         <?php else: ?>
             <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
                 <?php foreach ($looks as $look): 
                     $tem_pecas = array_filter([$look['idroupa1'], $look['idroupa2'], $look['idroupa3'], $look['idroupa4'], $look['idroupa5']]);
                     if (empty($tem_pecas)) continue; 
                 ?>
-                    <div class="col">
+                    <div class="col" data-aos="fade-up">
                         <div class="card look-card h-100">
                             <div class="look-preview-container">
                                 <?php
                                 $todas_cores = [];
                                 $ids_verticais = array_filter([$look['idroupa1'], $look['idroupa2'], $look['idroupa5'], $look['idroupa3']]);
                                 if (!empty($ids_verticais)) {
-                                    $ids_str = implode(',', $ids_verticais);
+                                    $ids_str = implode(',', array_map('intval', $ids_verticais));
                                     $res_p = $con->query("SELECT foto, cor1, cor2 FROM roupas WHERE id IN ($ids_str) ORDER BY FIELD(id, $ids_str)");
                                     while($p = $res_p->fetch_assoc()){ 
-                                        echo '<img src="'.$p['foto'].'" class="look-item-img">'; 
+                                        echo '<img src="'.htmlspecialchars($p['foto']).'" class="look-item-img">'; 
                                         if($p['cor1']) $todas_cores[] = $p['cor1'];
                                         if($p['cor2']) $todas_cores[] = $p['cor2'];
                                     }
                                 }
                                 if (!empty($look['idroupa4'])) {
-                                    $res_extra = $con->query("SELECT foto, cor1, cor2 FROM roupas WHERE id = " . $look['idroupa4']);
+                                    $res_extra = $con->query("SELECT foto, cor1, cor2 FROM roupas WHERE id = " . (int)$look['idroupa4']);
                                     if($extra = $res_extra->fetch_assoc()) {
-                                        echo '<img src="'.$extra['foto'].'" class="extra-item-img">';
+                                        echo '<img src="'.htmlspecialchars($extra['foto']).'" class="extra-item-img">';
                                         if($extra['cor1']) $todas_cores[] = $extra['cor1'];
                                         if($extra['cor2']) $todas_cores[] = $extra['cor2'];
                                     }
@@ -96,7 +115,7 @@ $looks = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
                                     $exibidas = array_unique(array_filter($todas_cores));
                                     foreach ($exibidas as $cor_bruta) {
                                         $hex = normalizeColorValue($cor_bruta);
-                                        if($hex) echo '<div class="color-swatch-display" style="background-color: '.$hex.';" title="'.$cor_bruta.'"></div>';
+                                        if($hex) echo '<div class="color-swatch-display" style="background-color: '.$hex.';" title="'.htmlspecialchars($cor_bruta).'"></div>';
                                     }
                                     ?>
                                 </div>
@@ -157,9 +176,22 @@ $looks = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 
 <?php include 'footer.php'; ?>
 <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/aos/aos.js"></script>
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    // Inicialização da biblioteca de animações AOS
+    AOS.init({
+        duration: 800,
+        once: true
+    });
+
+    window.addEventListener('load', function() {
+        document.querySelectorAll('[data-aos]').forEach(function(element) {
+            element.classList.add('aos-animate');
+        });
+    });
+
     // Exibe o feedback elegante caso haja mensagens via URL (?msg=...)
     <?php if ($mensagemUrl): ?>
         const feedbackModal = new bootstrap.Modal(document.getElementById('modalFeedbackGeral'));

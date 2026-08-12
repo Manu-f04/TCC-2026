@@ -8,7 +8,7 @@ require_once '../conexao.php';
 $logado = isset($_SESSION['idusuario']) && !empty($_SESSION['idusuario']);
 $id_usuario_logado = $logado ? (int)$_SESSION['idusuario'] : null;
 
-// Descobre a URL base do seu projeto dinamicamente (ex: http://localhost/seu-projeto/)
+// URL base do seu projeto
 $root_url = "http://localhost/manu.Info31/TCC/";
 
 // Lógica para o usuário publicar um look dele
@@ -71,10 +71,13 @@ if ($logado) {
     <title>Comunidade</title>
     <link href="../assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="../assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="../assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="../assets/css/main.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Poppins', sans-serif; background-color: #fafafa; color: #262626; }
+        body { background-color: #fafafa; color: #262626; }
+        .btn-floating {background:#000!important;color:#fff!important;border-radius:50px!important;padding:10px 25px!important;font-weight:500!important;border:none!important;display:inline-block!important;text-decoration:none!important;transition:all .3s!important}
+        .btn-floating:hover {background:#fff!important;color:#000!important;border:1px solid #000!important}
+        
         .look-card-feed { border: 1px solid #ddd; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background:#fff; display: flex; flex-direction: column; height: 100%; position: relative; }
         .look-preview-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 260px; background-color: #f8f9fa; padding: 10px; position: relative; }
         .look-item-img { max-width: 90%; max-height: 80px; object-fit: contain; margin: 2px 0; }
@@ -104,228 +107,22 @@ if ($logado) {
         .nav-tabs-feed .nav-link.active { color: #262626; font-weight: 600; background: none; }
         .nav-tabs-feed .nav-link.active::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 2px; background-color: #262626; }
     </style>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const rootUrl = "<?= $root_url ?>";
-
-            // LISTA DE PALAVRAS BLOQUEADAS (Adicione os palavrões/ofensas que quiser aqui em minúsculo)
-            const palavrasBloqueadas = ["idiota", "imbecil", "burro", "retardado", "otario", "otário", "babaca", "trouxa", "inutil", "inútil", "nojento", "ridiculo", "ridículo", "patetico", "patético", "escroto",
-             "lixo", "feio", "horroroso", "verme", "fracassado", "vagabundo", "vagabunda", "covarde", "canalha", "cretino", "palhaco", "palhaço", "animal", "doente", "maluco", "louco", "babão", "tapado", "anta", "otaria", 
-             "otária", "corno", "corna", "arrombado", "arrombada", "fdp", "filho da puta", "filha da puta", "puta", "puto", "merda", "bosta", "caralho", "cacete", "porra", "foda", "foder", "fudido", "fudida", "vai tomar no cu", 
-             "tomar no cu", "cuzao", "cuzão", "pau no cu", "desgracado", "desgraçado", "desgracada", "desgraçada", "infeliz", "miseravel", "miserável", "safado", "safada", "pilantra", "sem nocao", "sem noção", "troglodita", "asno", "jumento",
-             "energumeno", "energúmeno", "abestado", "mongol", "debil", "débil", "imundo", "ridicula", "ridícula"];
-
-            // Instancia o modal de ofensa para o JS usar
-            const modalOfensa = new bootstrap.Modal(document.getElementById('modalOfensaComentario'));
-
-            // CORREÇÃO DOS LINKS DO NAV VIA URL ABSOLUTA
-            document.querySelectorAll("header a, .navmenu a").forEach(link => {
-                let href = link.getAttribute("href");
-                if (href) {
-                    if (href.includes("logout.php")) { 
-                        link.setAttribute("href", rootUrl + "logout.php");
-                        return;
-                    }
-                    if (!href.startsWith("http") && !href.startsWith("#") && !href.startsWith("../")) {
-                        if (href === "comunidade.php" || href === "comunidade/comunidade.php") {
-                            link.setAttribute("href", "comunidade.php");
-                        } else if (href.startsWith("admin/")) {
-                            link.setAttribute("href", rootUrl + href);
-                        } else {
-                            link.setAttribute("href", rootUrl + href);
-                        }
-                    }
-                }
-            });
-
-            document.querySelectorAll("header img, .navmenu img").forEach(img => {
-                let src = img.getAttribute("src");
-                if (
-    src &&
-    !src.startsWith("http") &&
-    !src.startsWith("../") &&
-    !src.startsWith("/")
-) {
-                    img.setAttribute("src", rootUrl + src);
-                }
-            });
-
-            // LÓGICA DE CURTIDA EM SEGUNDO PLANO (FETCH)
-            document.querySelectorAll('.like-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    <?php if (!$logado): ?>
-                        window.location.href = rootUrl + "login.php";
-                        return;
-                    <?php endif; ?>
-
-                    const lookId = this.getAttribute('data-id');
-                    const icon = this.querySelector('i');
-                    const countSpan = document.getElementById('like-count-' + lookId);
-
-                    fetch('interagir.php?acao=curtir&look=' + lookId)
-                        .then(() => {
-                            if (icon.classList.contains('bi-heart')) {
-                                icon.classList.remove('bi-heart');
-                                icon.classList.add('bi-heart-fill');
-                                countSpan.textContent = parseInt(countSpan.textContent) + 1 + ' curtidas';
-                            } else {
-                                icon.classList.remove('bi-heart-fill');
-                                icon.classList.add('bi-heart');
-                                countSpan.textContent = parseInt(countSpan.textContent) - 1 + ' curtidas';
-                            }
-                        })
-                        .catch(err => console.log('Erro ao curtir:', err));
-                });
-            });
-
-            // POSTAR COMENTÁRIO COM VALIDAÇÃO ANTI-OFENSA
-            document.querySelectorAll('.comment-form').forEach(form => {
-                form.addEventListener('submit', function(e) {
-                    e.preventDefault();
-
-                    const input = this.querySelector('input[name="comentario"]');
-                    const textoComentario = input.value.trim().toLowerCase();
-
-                    if (!textoComentario) return;
-
-                    // VALIDAR SE CONTÉM ALGUM XINGAMENTO
-                    const contemOfensa = palavrasBloqueadas.some(palavra => textoComentario.includes(palavra));
-
-                    if (contemOfensa) {
-                        // Limpa o input ofensivo por educação/limpeza
-                        input.value = '';
-                        // Abre o modal de alerta e barra a execução
-                        modalOfensa.show();
-                        return;
-                    }
-
-                    const formData = new FormData(this);
-                    formData.append('comentar', '1');
-                    const lookId = formData.get('idlook');
-                    const sectionComentarios = document.getElementById('comment-section-' + lookId);
-
-                    fetch('interagir.php', {
-                        method: 'POST',
-                        body: formData
-                    })
-                    .then(() => {
-                        input.value = '';
-                        return fetch(window.location.href);
-                    })
-                    .then(response => response.text())
-                    .then(html => {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(html, 'text/html');
-                        const novaSection = doc.getElementById('comment-section-' + lookId);
-                        
-                        if (novaSection) {
-                            sectionComentarios.innerHTML = novaSection.innerHTML;
-                            sectionComentarios.scrollTop = sectionComentarios.scrollHeight;
-                            configurarGatilhosExclusao();
-                        }
-                    })
-                    .catch(err => console.log('Erro ao postar comentário:', err));
-                });
-            });
-
-            // GERENCIADOR DE MODAL (COMENTÁRIO E POST)
-            let urlExclusaoPendente = '';
-            let tipoExclusao = ''; 
-            
-            const modalExcluir = new bootstrap.Modal(document.getElementById('modalConfirmarExcluir'));
-            const btnConfirmarExcluir = document.getElementById('btnConfirmarExclusaoUrl');
-            const modalTitulo = document.getElementById('modalExcluirTitulo');
-            const modalTexto = document.getElementById('modalExcluirTexto');
-
-            function configurarGatilhosExclusao() {
-                document.querySelectorAll('.btn-delete-comment').forEach(btn => {
-                    btn.replaceWith(btn.cloneNode(true));
-                });
-
-                document.querySelectorAll('.btn-delete-comment').forEach(btn => {
-                    btn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        urlExclusaoPendente = this.getAttribute('href');
-                        tipoExclusao = 'comentario';
-                        
-                        modalTitulo.textContent = "Excluir comentário?";
-                        modalTexto.textContent = "Tem certeza que deseja remover permanentemente este comentário?";
-                        modalExcluir.show();
-                    });
-                });
-            }
-
-            document.querySelectorAll('.btn-trigger-delete-post').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    urlExclusaoPendente = this.getAttribute('data-href');
-                    tipoExclusao = 'post';
-
-                    modalTitulo.textContent = "Excluir publicação?";
-                    modalTexto.textContent = "Tem certeza que deseja remover este post do seu feed? Essa ação não pode ser desfeita.";
-                    modalExcluir.show();
-                });
-            });
-
-            btnConfirmarExcluir.addEventListener('click', function() {
-                if(urlExclusaoPendente) {
-                    modalExcluir.hide();
-                    
-                    fetch(urlExclusaoPendente)
-                        .then(() => {
-                            if (tipoExclusao === 'comentario') {
-                                const gatilho = document.querySelector(`.btn-delete-comment[href="${urlExclusaoPendente}"]`);
-                                if(gatilho) {
-                                    const linhaComentario = gatilho.closest('.d-flex');
-                                    const containerPai = linhaComentario.parentNode;
-                                    linhaComentario.remove();
-
-                                    if (containerPai.children.length === 0) {
-                                        containerPai.innerHTML = '<span class="text-muted d-block no-comments-msg" style="font-size: 0.78rem;">Nenhum comentário.</span>';
-                                    }
-                                }
-                            } else if (tipoExclusao === 'post') {
-                                const gatilho = document.querySelector(`.btn-trigger-delete-post[data-href="${urlExclusaoPendente}"]`);
-                                if(gatilho) {
-                                    const colunaCard = gatilho.closest('.col');
-                                    colunaCard.style.transition = 'all 0.3s ease';
-                                    colunaCard.style.opacity = '0';
-                                    colunaCard.style.transform = 'scale(0.8)';
-                                    setTimeout(() => {
-                                        colunaCard.remove();
-                                        if(document.querySelectorAll('.look-card-feed').length === 0) {
-                                            window.location.reload();
-                                        }
-                                    }, 300);
-                                }
-                            }
-                        })
-                        .catch(err => console.log('Erro ao processar exclusão:', err));
-                }
-            });
-
-            configurarGatilhosExclusao();
-        });
-    </script>
 </head>
 <body class="index-page">
 
     <?php include '../nav.php'; ?>
 
-    <main class="main" style="margin-top: 90px;">
-        <div class="container my-5">
+    <main class="main">
+        <div class="container my-5" style="padding-top: 20px;">
             
-            <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="d-flex justify-content-between align-items-center mb-4" data-aos="fade-up" data-aos-delay="100">
                 <h1 class="h3 fw-bold m-0">Comunidade</h1>
                 <?php if ($logado): ?>
-                    <a href="publicar_look.php" class="btn btn-dark rounded-pill px-4">
-                        <i class="bi bi-plus-lg"></i> Compartilhar Look
-                    </a>
+                    <a href="publicar_look.php" class="btn btn-floating">Compartilhar Look</a>
                 <?php endif; ?>
             </div>
 
-            <ul class="nav nav-tabs-feed mb-4">
+            <ul class="nav nav-tabs-feed mb-4" data-aos="fade-up" data-aos-delay="150">
                 <li class="nav-item">
                     <a class="nav-link <?= $filtro === 'recentes' ? 'active' : '' ?>" href="comunidade.php?filtro=recentes">
                         <i class="bi bi-clock me-1"></i> Publicações mais recentes
@@ -339,14 +136,17 @@ if ($logado) {
             </ul>
 
             <?php if (empty($posts)): ?>
-                <div class="text-center py-5">
+                <div class="text-center py-5" data-aos="fade-up" data-aos-delay="200">
                     <i class="bi bi-heart-break h1 text-muted"></i>
-                    <p class="text-muted mt-2">Nenhum look com curtidas nesta semana.</p>
+                    <p class="text-muted mt-2">Nenhum look encontrado.</p>
                 </div>
             <?php else: ?>
                 <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4">
-                    <?php foreach ($posts as $post): ?>
-                        <div class="col" id="look-<?= $post['id'] ?>">
+                    <?php 
+                    $delay = 200;
+                    foreach ($posts as $post): 
+                    ?>
+                        <div class="col" id="look-<?= $post['id'] ?>" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
                             <div class="card look-card-feed">
                                 
                                 <div class="d-flex align-items-center justify-content-between p-3 border-bottom">
@@ -388,21 +188,45 @@ if ($logado) {
 
                                 <div class="look-preview-container">
                                     <?php
+                                    $todas_tags = [];
+
+                                    if (!empty($post['tags'])) {
+                                        $todas_tags[] = $post['tags'];
+                                    }
+
                                     $ids_verticais = array_filter([$post['idroupa1'], $post['idroupa2'], $post['idroupa5'], $post['idroupa3']]);
                                     if (!empty($ids_verticais)) {
                                         $ids_str = implode(',', $ids_verticais);
-                                        $res_p = $con->query("SELECT foto FROM roupas WHERE id IN ($ids_str) ORDER BY FIELD(id, $ids_str)");
+                                        $res_p = $con->query("SELECT foto, tags FROM roupas WHERE id IN ($ids_str) ORDER BY FIELD(id, $ids_str)");
                                         while ($p = $res_p->fetch_assoc()) { 
                                             echo '<img src="../'.$p['foto'].'" class="look-item-img">'; 
+                                            if (!empty($p['tags'])) {
+                                                $todas_tags[] = $p['tags'];
+                                            }
                                         }
                                     }
                                     
                                     if (!empty($post['idroupa4'])) {
-                                        $res_extra = $con->query("SELECT foto FROM roupas WHERE id = " . intval($post['idroupa4']));
+                                        $res_extra = $con->query("SELECT foto, tags FROM roupas WHERE id = " . intval($post['idroupa4']));
                                         if ($extra = $res_extra->fetch_assoc()) {
                                             echo '<img src="../'.$extra['foto'].'" class="extra-item-img">';
+                                            if (!empty($extra['tags'])) {
+                                                $todas_tags[] = $extra['tags'];
+                                            }
                                         }
                                     }
+
+                                    $lista_tags_limpas = [];
+                                    foreach ($todas_tags as $string_tag) {
+                                        $pedacos = explode(',', $string_tag);
+                                        foreach ($pedacos as $pedaco) {
+                                            $t = trim($pedaco);
+                                            if (!empty($t)) {
+                                                $lista_tags_limpas[] = $t;
+                                            }
+                                        }
+                                    }
+                                    $tags_unicas = array_unique($lista_tags_limpas);
                                     ?>
                                 </div>
 
@@ -421,11 +245,10 @@ if ($logado) {
                                         
                                         <span class="fw-bold d-block small text-secondary mb-1">
                                             <?php 
-                                            if (!empty($post['tags'])) {
-                                                $array_tags = explode(',', $post['tags']);
+                                            if (!empty($tags_unicas)) {
                                                 $tags_formatadas = array_map(function($tag) {
-                                                    return '#' . trim($tag);
-                                                }, $array_tags);
+                                                    return '#' . $tag;
+                                                }, $tags_unicas);
                                                 echo htmlspecialchars(implode(' ', $tags_formatadas));
                                             } else {
                                                 echo 'Sem tags';
@@ -480,14 +303,17 @@ if ($logado) {
 
                             </div>
                         </div>
-                    <?php endforeach; ?>
+                    <?php 
+                        $delay += 100;
+                    endforeach; 
+                    ?>
                 </div>
             <?php endif; ?>
 
         </div>
     </main>
 
-    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO (Já existente) -->
+    <!-- MODAL DE CONFIRMAÇÃO DE EXCLUSÃO -->
     <div class="modal fade" id="modalConfirmarExcluir" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content border-0 shadow" style="border-radius: 14px;">
@@ -504,7 +330,7 @@ if ($logado) {
         </div>
     </div>
 
-    <!-- NOVO MODAL: ALERTA DE COMENTÁRIO OFENSIVO (FILTRO ANTI-TOXICIDADE) -->
+    <!-- MODAL ALERTA DE COMENTÁRIO BLOQUEADO -->
     <div class="modal fade" id="modalOfensaComentario" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered modal-sm">
             <div class="modal-content border-0 shadow" style="border-radius: 14px;">
@@ -523,5 +349,195 @@ if ($logado) {
     <?php include '../footer.php'; ?>
 
     <script src="../assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="../assets/vendor/aos/aos.js"></script>
+
+    <script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof AOS !== 'undefined') {
+            AOS.init({
+                duration: 600,
+                easing: 'ease-in-out',
+                once: true,
+                mirror: false
+            });
+        }
+
+        const rootUrl = "<?= $root_url ?>";
+
+        const modalOfensaElement = document.getElementById('modalOfensaComentario');
+        const modalOfensa = new bootstrap.Modal(modalOfensaElement);
+
+        document.querySelectorAll("header a, .navmenu a").forEach(link => {
+            let href = link.getAttribute("href");
+            if (href && !href.startsWith("http") && !href.startsWith("#") && !href.startsWith("javascript")) {
+                let cleanHref = href.replace(/^(\.\.\/|\.\/|\/)+/, '').replace(/^manu\.Info31\/TCC\//i, ''); 
+                
+                if (cleanHref === "comunidade.php" || cleanHref === "comunidade/comunidade.php") {
+                    link.setAttribute("href", "comunidade.php");
+                } else {
+                    link.setAttribute("href", rootUrl + cleanHref);
+                }
+            }
+        });
+
+        document.querySelectorAll("header img, .navmenu img").forEach(img => {
+            let src = img.getAttribute("src");
+            if (src && !src.startsWith("http") && !src.startsWith("data:")) {
+                let cleanSrc = src.replace(/^(\.\.\/|\.\/|\/)+/, '').replace(/^manu\.Info31\/TCC\//i, '');
+                img.setAttribute("src", rootUrl + cleanSrc);
+            }
+        });
+
+        document.querySelectorAll('.like-btn').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                <?php if (!$logado): ?>
+                    window.location.href = rootUrl + "login.php";
+                    return;
+                <?php endif; ?>
+
+                const lookId = this.getAttribute('data-id');
+                const icon = this.querySelector('i');
+                const countSpan = document.getElementById('like-count-' + lookId);
+
+                fetch('interagir.php?acao=curtir&look=' + lookId)
+                    .then(() => {
+                        if (icon.classList.contains('bi-heart')) {
+                            icon.classList.remove('bi-heart');
+                            icon.classList.add('bi-heart-fill');
+                            countSpan.textContent = parseInt(countSpan.textContent) + 1 + ' curtidas';
+                        } else {
+                            icon.classList.remove('bi-heart-fill');
+                            icon.classList.add('bi-heart');
+                            countSpan.textContent = parseInt(countSpan.textContent) - 1 + ' curtidas';
+                        }
+                    })
+                    .catch(err => console.log('Erro ao curtir:', err));
+            });
+        });
+
+        document.querySelectorAll('.comment-form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const input = this.querySelector('input[name="comentario"]');
+                if (!input.value.trim()) return;
+
+                const formData = new FormData(this);
+                formData.append('comentar', '1');
+                const lookId = formData.get('idlook');
+                const sectionComentarios = document.getElementById('comment-section-' + lookId);
+
+                fetch('interagir.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(async response => {
+                    const data = await response.json().catch(() => ({}));
+                    if (!response.ok || data.erro === "bloqueado") {
+                        input.value = '';
+                        modalOfensa.show();
+                        throw new Error("Comentário bloqueado");
+                    }
+                    return data;
+                })
+                .then(() => {
+                    input.value = '';
+                    return fetch(window.location.href);
+                })
+                .then(response => response.text())
+                .then(html => {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+                    const novaSection = doc.getElementById('comment-section-' + lookId);
+                    
+                    if (novaSection) {
+                        sectionComentarios.innerHTML = novaSection.innerHTML;
+                        sectionComentarios.scrollTop = sectionComentarios.scrollHeight;
+                        configurarGatilhosExclusao();
+                    }
+                })
+                .catch(err => console.log('Processo de comentário interrompido:', err.message));
+            });
+        });
+
+        let urlExclusaoPendente = '';
+        let tipoExclusao = ''; 
+        
+        const modalExcluir = new bootstrap.Modal(document.getElementById('modalConfirmarExcluir'));
+        const btnConfirmarExcluir = document.getElementById('btnConfirmarExclusaoUrl');
+        const modalTitulo = document.getElementById('modalExcluirTitulo');
+        const modalTexto = document.getElementById('modalExcluirTexto');
+
+        function configurarGatilhosExclusao() {
+            document.querySelectorAll('.btn-delete-comment').forEach(btn => {
+                btn.replaceWith(btn.cloneNode(true));
+            });
+
+            document.querySelectorAll('.btn-delete-comment').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    urlExclusaoPendente = this.getAttribute('href');
+                    tipoExclusao = 'comentario';
+                    
+                    modalTitulo.textContent = "Excluir comentário?";
+                    modalTexto.textContent = "Tem certeza que deseja remover permanentemente este comentário?";
+                    modalExcluir.show();
+                });
+            });
+        }
+
+        document.querySelectorAll('.btn-trigger-delete-post').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                urlExclusaoPendente = this.getAttribute('data-href');
+                tipoExclusao = 'post';
+
+                modalTitulo.textContent = "Excluir publicação?";
+                modalTexto.textContent = "Tem certeza que deseja remover este post do seu feed? Essa ação não pode ser desfeita.";
+                modalExcluir.show();
+            });
+        });
+
+        btnConfirmarExcluir.addEventListener('click', function() {
+            if(urlExclusaoPendente) {
+                modalExcluir.hide();
+                
+                fetch(urlExclusaoPendente)
+                    .then(() => {
+                        if (tipoExclusao === 'comentario') {
+                            const gatilho = document.querySelector(`.btn-delete-comment[href="${urlExclusaoPendente}"]`);
+                            if(gatilho) {
+                                const linhaComentario = gatilho.closest('.d-flex');
+                                const containerPai = linhaComentario.parentNode;
+                                linhaComentario.remove();
+
+                                if (containerPai.children.length === 0) {
+                                    containerPai.innerHTML = '<span class="text-muted d-block no-comments-msg" style="font-size: 0.78rem;">Nenhum comentário.</span>';
+                                }
+                            }
+                        } else if (tipoExclusao === 'post') {
+                            const gatilho = document.querySelector(`.btn-trigger-delete-post[data-href="${urlExclusaoPendente}"]`);
+                            if(gatilho) {
+                                const colunaCard = gatilho.closest('.col');
+                                colunaCard.style.transition = 'all 0.3s ease';
+                                colunaCard.style.opacity = '0';
+                                colunaCard.style.transform = 'scale(0.8)';
+                                setTimeout(() => {
+                                    colunaCard.remove();
+                                    if(document.querySelectorAll('.look-card-feed').length === 0) {
+                                        window.location.reload();
+                                    }
+                                }, 300);
+                            }
+                        }
+                    })
+                    .catch(err => console.log('Erro ao processar exclusão:', err));
+            }
+        });
+
+        configurarGatilhosExclusao();
+    });
+    </script>
 </body>
 </html>

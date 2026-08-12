@@ -88,6 +88,51 @@ if (!empty($usuario['data_nascimento'])) {
     }
   </style>
 </head>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const modalElement = document.getElementById('modalDeletarConta');
+  const btnDeletar = modalElement.querySelector('.btn-danger');
+  const spanTimer = modalElement.querySelector('.timer-seconds');
+  
+  let intervalId = null;
+  const TEMPO_ESPERA = 5;
+
+  modalElement.addEventListener('show.bs.modal', function () {
+    let tempoRestante = TEMPO_ESPERA;
+    
+    // Configuração inicial ao abrir o modal
+    btnDeletar.classList.add('disabled');
+    btnDeletar.style.pointerEvents = 'none';
+    spanTimer.textContent = tempoRestante;
+
+    // Limpa interval anterior se existir
+    if (intervalId) clearInterval(intervalId);
+
+    // Inicia a contagem regressiva
+    intervalId = setInterval(function () {
+      tempoRestante--;
+
+      if (tempoRestante > 0) {
+        spanTimer.textContent = tempoRestante;
+      } else {
+        // Libera o botão quando o tempo esgota
+        clearInterval(intervalId);
+        btnDeletar.classList.remove('disabled');
+        btnDeletar.style.pointerEvents = 'auto';
+        btnDeletar.innerHTML = 'Sim, Eliminar Minha Conta';
+      }
+    }, 1000);
+  });
+
+  // Reseta o estado do botão se o modal for fechado antes dos 5s
+  modalElement.addEventListener('hidden.bs.modal', function () {
+    if (intervalId) clearInterval(intervalId);
+    btnDeletar.classList.add('disabled');
+    btnDeletar.style.pointerEvents = 'none';
+    btnDeletar.innerHTML = 'Sim, Eliminar Minha Conta (<span class="timer-seconds">5</span>s)';
+  });
+});
+</script>
 <body>
   <?php include 'nav.php'; ?>
 
@@ -171,8 +216,10 @@ if (!empty($usuario['data_nascimento'])) {
           <p class="mt-3"><strong>Atenção:</strong> Você está prestes a eliminar sua conta permanentemente. Todos os seus dados serão perdidos.</p>
         </div>
         <div class="modal-footer border-0 d-flex justify-content-center pb-4 gap-2">
-          <button type="button" class="btn btn-light rounded-pill px-4" data-bs-dismiss="modal">Cancelar</button>
-          <a href="deletar_conta.php" class="btn btn-danger rounded-pill px-4">Sim, Eliminar Minha Conta</a>
+          <button type="button" class="btn btn-light w-100 rounded-pill small" data-bs-dismiss="modal">Cancelar</button>
+          <a href="deletar_conta.php" class="btn btn-danger rounded-pill px-4">
+            Sim, Eliminar Minha Conta (<span class="timer-seconds">5</span>s)
+          </a>
         </div>
       </div>
     </div>

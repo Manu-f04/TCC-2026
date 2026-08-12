@@ -23,14 +23,15 @@ if ($id <= 0) {
     exit;
 }
 
-// ==========================================
-// AÇÃO: DELETAR COMENTÁRIO
-// ==========================================
 if ($acao === 'deletar_comentario') {
-    // Garante que o comentário pertence ao usuário logado antes de deletar
-    $stmt = $con->prepare("DELETE FROM comunidade_comentarios WHERE id = ? AND idusuario = ?");
-    $stmt->bind_param("ii", $id, $id_usuario_logado);
-    
+    // Permite deletar se for o autor do comentário OU o dono do look
+    $stmt = $con->prepare("
+        DELETE c FROM comunidade_comentarios c
+        JOIN looks l ON c.idlook = l.id
+        WHERE c.id = ? AND (c.idusuario = ? OR l.idusuario = ?)
+    ");
+    $stmt->bind_param("iii", $id, $id_usuario_logado, $id_usuario_logado);
+
     if ($stmt->execute()) {
         echo json_encode(["sucesso" => true]);
     } else {

@@ -2,7 +2,7 @@
 require_once("verificar_admin.php"); 
 require_once("../conexao.php"); // Certifique-se que o caminho da conexão está correto
 
-$pagina_titulo = "Lista de Roupas";
+$pagina_titulo = "Gerenciar roupas ";
 $pagina_ativa = "roupas";
 require_once("header_admin.php"); 
 

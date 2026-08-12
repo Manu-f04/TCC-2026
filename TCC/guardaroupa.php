@@ -62,6 +62,8 @@ try {
     }
     $todasCoresHex = array_unique($coresDaListagem);
 
+    $totalGeralPecas = array_sum(array_column($categoriasComContagem, 'contagem'));
+
 } catch (Exception $e) {
     $mensagem = 'Erro: ' . $e->getMessage();
 }
@@ -74,6 +76,7 @@ try {
     <title>Guarda-roupa</title>
     <link href="assets/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/vendor/bootstrap-icons/bootstrap-icons.css" rel="stylesheet">
+    <link href="assets/vendor/aos/aos.css" rel="stylesheet">
     <link href="assets/css/main.css" rel="stylesheet">
     <style>
         .btn-floating{background:#000!important;color:#fff!important;border-radius:50px!important;padding:10px 25px!important;font-weight:500!important;border:none!important;transition:all .3s!important;display:inline-block!important;text-decoration:none!important}
@@ -82,6 +85,33 @@ try {
         @media (min-width: 992px) {
             .col-sidebar { width: 30% !important; } 
             .col-content { width: 70% !important; }
+        }
+
+        .btn-todas-cat {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 10px 14px;
+            margin-bottom: 12px;
+            border-radius: 10px;
+            border: 1px solid #e0e0e0;
+            background: #fff;
+            color: #333;
+            font-weight: 600;
+            font-size: 0.88rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        .btn-todas-cat:hover {
+            background: #f8f9fa;
+            border-color: #000;
+            color: #000;
+        }
+        .btn-todas-cat.active {
+            background: #000;
+            color: #fff;
+            border-color: #000;
         }
 
         .grid-categorias { display: grid; grid-template-columns: 1fr 1fr; position: relative; border: 1px solid #eee; border-radius: 10px; background: #fff; overflow: hidden; width: 100%; }
@@ -101,13 +131,24 @@ try {
         .color-swatch.active{border:2px solid #000;transform:scale(1.1)}
         .products-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:20px}
         
-        .txt-vinculo { font-size: 0.72rem; color: #999; margin-bottom: 10px; display: block; }
+        .txt-vinculo { font-size: 0.72rem; color: #999; margin-bottom: 8px; display: block; }
+        
+        .tag-badge {
+            background-color: #f1f3f5;
+            color: #495057;
+            font-size: 0.7rem;
+            font-weight: 500;
+            padding: 3px 8px;
+            border-radius: 12px;
+            border: 1px solid #e9ecef;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="index-page">
 <?php include 'nav.php'; ?>
 <main class="main">
-    <div class="page-title light-background">
+    <div class="page-title light-background" data-aos="fade-up">
         <div class="container d-lg-flex justify-content-between align-items-center py-4">
             <h1 class="m-0">Guarda-roupa</h1>
             <a href="editar_roupa.php" class="btn btn-floating">Cadastrar Roupa</a>
@@ -116,11 +157,29 @@ try {
 
     <div class="container-fluid px-lg-5 my-4">
         <div class="row g-4">
-            <div class="col-lg-3 col-sidebar">
+            <div class="col-lg-3 col-sidebar" data-aos="fade-up">
                 <div class="card p-3 shadow-sm border-0" style="border-radius: 15px; background: #fcfcfc;">
                     <h6 class="fw-bold mb-3">Categorias</h6>
-                    <a href="guardaroupa.php" class="d-block mb-3 <?= $filtroCategoriaId === null ? 'fw-bold text-dark' : 'text-muted' ?>" style="text-decoration:none; font-size: 0.9rem;">
-                        Todas as categorias
+                    
+             <!-- EXIBIÇÃO DAS TAGS CORRIGIDA -->
+<?php 
+    $rawTags = trim($r['tags'] ?? '');
+    if ($rawTags !== '' && $rawTags !== '0'): 
+        $listaTags = array_filter(array_map('trim', explode(',', $rawTags)), 'strlen');
+        if (!empty($listaTags)):
+?>
+            <div class="d-flex flex-wrap justify-content-center gap-1 mb-3">
+                <?php foreach ($listaTags as $tag): 
+                    if ($tag === '0') continue;
+                ?>
+                    <span class="tag-badge">#<?= htmlspecialchars($tag) ?></span>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+<?php endif; ?>       <?php $isTodasAtivo = ($filtroCategoriaId === null); ?>
+                    <a href="guardaroupa.php" class="btn-todas-cat <?= $isTodasAtivo ? 'active' : '' ?>">
+                        <span><i class="bi bi-grid-fill me-2"></i>Todas as categorias</span>
+                        <span class="badge rounded-pill <?= $isTodasAtivo ? 'bg-light text-dark' : 'bg-secondary text-white' ?>"><?= $totalGeralPecas ?></span>
                     </a>
 
                     <div class="grid-categorias">
@@ -148,7 +207,7 @@ try {
 
             <div class="col-lg-9 col-content">
                 <?php if (empty($roupas)): ?>
-                    <div class="text-center py-5">
+                    <div class="text-center py-5" data-aos="fade-up">
                         <i class="bi bi-archive text-muted" style="font-size: 3rem;"></i>
                         <h4 class="text-muted mt-3">Nenhuma peça nesta categoria.</h4>
                     </div>
@@ -168,12 +227,30 @@ try {
                             
                             $frase_vinculo = ($total_looks == 0) ? "Essa peça não está vinculada a nenhum look" : ($total_looks == 1 ? "Vinculada a 1 look" : "Vinculada a $total_looks looks");
                         ?>
-                            <div class="product-item" data-colors="<?= $coresFiltro ?>">
+                            <div class="product-item" data-colors="<?= $coresFiltro ?>" data-aos="fade-up">
                                 <div class="product-card">
                                     <div class="product-image"><img src="<?= htmlspecialchars($r['foto']) ?>"></div>
                                     <div class="product-info">
                                         <h6 class="fw-bold mb-1"><?= htmlspecialchars($r['nome_categoria']) ?></h6>
                                         <span class="txt-vinculo"><?= $frase_vinculo ?></span>
+                                        
+                                        <!-- EXIBIÇÃO DAS TAGS CORRIGIDA -->
+                                        <?php 
+                                            $rawTags = trim($r['tags'] ?? '');
+                                            if ($rawTags !== '' && $rawTags !== '0'): 
+                                                $listaTags = array_filter(array_map('trim', explode(',', $rawTags)), 'strlen');
+                                                if (!empty($listaTags)):
+                                        ?>
+                                                    <div class="d-flex flex-wrap justify-content-center gap-1 mb-3">
+                                                        <?php foreach ($listaTags as $tag): 
+                                                            if ($tag === '0') continue;
+                                                        ?>
+                                                            <span class="tag-badge">#<?= htmlspecialchars($tag) ?></span>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                <?php endif; ?>
+                                        <?php endif; ?>
+
                                         <div class="d-flex justify-content-center gap-2">
                                             <a href="editar_roupa.php?id=<?= $r['id'] ?>" class="btn btn-sm btn-outline-dark rounded-pill px-3">Editar</a>
                                             <button class="btn btn-sm btn-danger rounded-pill px-3" data-bs-toggle="modal" data-bs-target="#modalR<?= $r['id'] ?>">Excluir</button>
@@ -182,7 +259,6 @@ try {
                                 </div>
                             </div>
 
-                            <!-- Modal de Confirmação de Exclusão (Atualizado) -->
                             <div class="modal fade" id="modalR<?= $r['id'] ?>" tabindex="-1">
                                 <div class="modal-dialog modal-dialog-centered modal-sm">
                                     <div class="modal-content text-center" style="border-radius: 20px;">
@@ -211,7 +287,6 @@ try {
     </div>
 </main>
 
-<!-- Modal Pop-up Geral para Retornos e Sucessos (Substitui o Alert Simples do Topo) -->
 <div class="modal fade" id="modalFeedbackGeral" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-sm">
         <div class="modal-content text-center" style="border-radius: 20px;">
@@ -231,22 +306,31 @@ try {
 
 <?php include 'footer.php'; ?>
 <script src="assets/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+<script src="assets/vendor/aos/aos.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
-        // Dispara o novo modal se houver alguma mensagem retornada na URL
+        AOS.init({
+            duration: 800,
+            once: true
+        });
+
+        window.addEventListener('load', function() {
+            document.querySelectorAll('[data-aos]').forEach(function(element) {
+                element.classList.add('aos-animate');
+            });
+        });
+
         <?php if ($mensagem): ?>
             const feedbackModal = new bootstrap.Modal(document.getElementById('modalFeedbackGeral'));
             feedbackModal.show();
         <?php endif; ?>
 
-        // LIMPA URL
         if (window.history.replaceState) {
             const url = new URL(window.location.href);
             url.searchParams.delete('msg');
             window.history.replaceState({path:url.href}, '', url.href);
         }
 
-        // FILTRO DE CORES
         const swatches = document.querySelectorAll('.color-swatch');
         const items = document.querySelectorAll('.product-item');
         swatches.forEach(swatch => {
