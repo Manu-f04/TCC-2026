@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1:3306
--- Tempo de geração: 26/06/2026 às 19:54
+-- Tempo de geração: 07/07/2026 às 18:03
 -- Versão do servidor: 8.4.7
 -- Versão do PHP: 8.3.28
 
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS `comunidade_comentarios` (
   PRIMARY KEY (`id`),
   KEY `idlook` (`idlook`),
   KEY `idusuario` (`idusuario`)
-) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=19 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -97,13 +97,6 @@ CREATE TABLE IF NOT EXISTS `comunidade_curtidas` (
   UNIQUE KEY `usuario_look` (`idlook`,`idusuario`),
   KEY `idusuario` (`idusuario`)
 ) ENGINE=InnoDB AUTO_INCREMENT=24 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
-
---
--- Despejando dados para a tabela `comunidade_curtidas`
---
-
-INSERT INTO `comunidade_curtidas` (`id`, `idlook`, `idusuario`, `data_curtida`) VALUES
-(23, 51, 12, '2026-06-26 18:45:31');
 
 -- --------------------------------------------------------
 
@@ -156,14 +149,14 @@ CREATE TABLE IF NOT EXISTS `looks` (
   KEY `idroupa3` (`idroupa3`),
   KEY `fk_looks_roupa5` (`idroupa5`),
   KEY `fk_looks_roupa4` (`idroupa4`)
-) ENGINE=InnoDB AUTO_INCREMENT=52 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=53 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Despejando dados para a tabela `looks`
 --
 
 INSERT INTO `looks` (`id`, `idusuario`, `nome`, `tags`, `cores`, `idroupa1`, `idroupa2`, `idroupa3`, `idroupa4`, `idroupa5`, `publicado`, `legenda`, `data_publicacao`) VALUES
-(51, 12, 'Looks simples', 'Sair', NULL, 80, 81, 82, 83, NULL, 1, 'Look simples, para sair em um dia calor', '2026-06-26 15:42:27');
+(52, 10, 'Looks simples', 'Sair', NULL, 85, 86, 87, NULL, NULL, 1, 'Dias dourados. ✨', '2026-07-07 11:35:33');
 
 -- --------------------------------------------------------
 
@@ -186,18 +179,17 @@ CREATE TABLE IF NOT EXISTS `roupas` (
   KEY `idusuario` (`idusuario`),
   KEY `idCategoria` (`idCategoria`),
   KEY `fk_roupas_estacao` (`idEstacao`)
-) ENGINE=InnoDB AUTO_INCREMENT=85 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=89 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 --
 -- Despejando dados para a tabela `roupas`
 --
 
 INSERT INTO `roupas` (`id`, `idusuario`, `foto`, `cor1`, `cor2`, `idCategoria`, `idEstacao`, `estacoes`, `tags`) VALUES
-(80, 12, 'uploads/roupas/roupa_6a3ec48677b35.jpg', '#1b1b1b', '#ffffff', 11, NULL, '1', ''),
-(81, 12, 'uploads/roupas/roupa_6a3ec4bb5e90a.jpg', '#6785af', '#ffffff', 16, NULL, '1', '0'),
-(82, 12, 'uploads/roupas/roupa_6a3ec4e4c4299.jpg', '#000000', '#ffffff', 26, NULL, '1,2,3,4', ''),
-(83, 12, 'uploads/roupas/roupa_6a3ec529e3bac.jpg', '#000000', '#ffffff', 32, NULL, '1,2,3,4', ''),
-(84, 12, 'uploads/roupas/roupa_6a3ec5a165ba0.jpg', '#000000', '#ffffff', 19, NULL, '1,2,3,4', '');
+(85, 10, 'uploads/roupas/roupa_6a4d09e4b6575.jpg', '#000000', '#ffffff', 11, NULL, '1,2,3,4', '0'),
+(86, 10, 'uploads/roupas/roupa_6a4d09f00b93a.jpg', '#000000', '#ffffff', 15, NULL, '1,2,3,4', '0'),
+(87, 10, 'uploads/roupas/roupa_6a4d09d65b0b6.jpg', '#000000', '#ffffff', 27, NULL, '1,2,3,4', ''),
+(88, 10, 'uploads/roupas/roupa_6a4d37b495929.jpg', '#000000', '#ffffff', 18, NULL, '1', '');
 
 -- --------------------------------------------------------
 
@@ -247,8 +239,7 @@ CREATE TABLE IF NOT EXISTS `usuarios` (
 --
 
 INSERT INTO `usuarios` (`id`, `nome`, `nome_usuario`, `email`, `cpf`, `senha`, `token_redefinicao`, `token_expires_at`, `foto`, `telefone`, `data_nascimento`, `nivel_acesso`) VALUES
-(10, 'Manu', 'manusoaresf1', 'emanuelle.2023325655@aluno.iffar.edu.br', '03218742005', '$2y$10$6Qms4Ogtpb1v4wDXWi7zH.yNwrxcU2STQAHHOb9ns5ehjOoxphLV.', NULL, NULL, NULL, '55 9685-6206', '2008-02-19', 'admin'),
-(12, 'Alicia monteiro', 'Alicia_monteiro', 'Aliciamonteiro@gmail.com', '67311559006', 'alici123', NULL, NULL, NULL, '5422613146', '2008-02-17', 'usuario');
+(10, 'Manu', 'manusoaresf1', 'emanuelle.2023325655@aluno.iffar.edu.br', '03218742005', '$2y$10$6Qms4Ogtpb1v4wDXWi7zH.yNwrxcU2STQAHHOb9ns5ehjOoxphLV.', NULL, NULL, NULL, '', NULL, 'admin');
 
 --
 -- Restrições para tabelas despejadas
