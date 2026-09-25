@@ -1,0 +1,110 @@
+body {
+	margin: 0;
+	font-family: 'Poppins', sans-serif;
+	background: #ffffff;
+	text-align: center;
+}
+
+.container {
+	width: 100vw;
+	height: 100vh;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.login-content form {
+	background: rgba(255, 255, 255, 0.9);
+	padding: 3rem;
+	border-radius: 35px;
+	box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+	width: 270px;
+	text-align: center;
+}
+
+.title {
+	color: #000000af;
+	text-align: center;
+	/*margin-bottom: 10px;*/
+}
+
+.subTitle {
+	color: rgb(0, 0, 0);
+	text-align: center;
+	margin-bottom: -0.5vh;
+	margin-top: -0.5vh;
+}
+
+.subTitle2 {
+	color: rgb(0, 0, 0);
+	text-align: left;
+	margin-top: 2vh;
+	/*text-decoration: solid;*/
+}
+
+.text {
+	color: rgb(0, 0, 0);
+	text-align: center;
+
+}
+
+.subtitle {
+	color: #000000;
+	margin-bottom: 20px;
+	margin-bottom: -0.5vh;
+	margin-top: -0.5vh; 	
+}
+
+.input-div {
+	text-align: left;
+	margin-bottom: 15px;
+}
+
+.input-div h4 {
+	margin-bottom: 5px;
+	font-size: 0.9rem;
+	color: #000000;
+}
+
+.input {
+	width: 100%;
+	padding: 8px;
+	border: 1px solid #a5a5a5;
+	border-radius: 8px;
+	outline: none;
+}
+
+.inpText {
+	width: 93%;
+	padding: 8px;
+	border: 1px solid #a5a5a5;
+	border-radius: 10px;
+	outline: none;
+	align-self: center;
+}
+
+.input:focus {
+	border-color: #000000;
+}
+
+a {
+	display: block;
+	font-size: 0.85rem;
+	color: #000000;
+	text-decoration: none;
+	margin: 5px 0;
+	text-align: center;
+}
+
+.btn {
+	width: 100%;
+	padding: 10px;
+	border: none;
+	border-radius: 25px;
+	background: linear-gradient(to right, #00000071, #000000);
+	color: rgb(255, 255, 255);
+	font-size: 1rem;
+	cursor: pointer;
+	transition: 1s;
+	margin-top: 10px;
+}
